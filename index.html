@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi Mascota</title>
+<style>
+:root{--bg:#0e1424;--eye:#19ffff;--glow:#00e5ff;--scr:#0e1424;--mouth:#ffd6e0;--ui:#1b2440;--txt:#e8f0ff;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;touch-action:manipulation}
+body[data-emo=happy]{--eye:#4dffd2;--glow:#18f0b0}
+body[data-emo=surprise]{--eye:#fff3a0;--glow:#ffd93b}
+body[data-emo=angry]{--eye:#ff7a7a;--glow:#ff2d2d}
+#stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:110px}
+#head{width:min(90vw,520px);aspect-ratio:400/340;touch-action:none;user-select:none}
+svg{width:100%;height:100%;filter:drop-shadow(0 0 9px var(--glow));pointer-events:none}
+.ball{fill:var(--eye);transition:fill .3s,clip-path .3s;clip-path:polygon(-5% -5%,105% -5%,105% 105%,-5% 105%) fill-box}
+body[data-emo=happy] .ball{clip-path:polygon(-5% -5%,105% -5%,105% 55%,-5% 55%) fill-box}
+body[data-emo=angry] .L .ball{clip-path:polygon(-5% 28%,105% 62%,105% 105%,-5% 105%) fill-box}
+body[data-emo=angry] .R .ball{clip-path:polygon(-5% 62%,105% 28%,105% 105%,-5% 105%) fill-box}
+.look{transition:transform .25s ease-out;transform:translate(calc(var(--lx,0)*1px),calc(var(--ly,0)*1px))}
+.blink{transform-box:fill-box;transform-origin:center;animation:blink 4.5s infinite;transition:transform .3s}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.08)}}
+.scale{transform-box:fill-box;transform-origin:center;transition:transform .25s}
+body[data-emo=surprise] .scale{transform:scale(1.3)}
+body[data-thinking] .look{transform:translate(0,-16px)}
+.mouth{fill:var(--eye);fill-opacity:0;stroke:var(--eye);stroke-width:13;stroke-linecap:round;stroke-linejoin:round;transition:d .3s,fill-opacity .3s,stroke .3s;
+ d:path("M168 228 Q200 262 232 228 Q232 228 232 228 Q232 228 232 228 Q232 228 232 228");transform-box:fill-box;transform-origin:50% 0;transform:scaleY(var(--talk,1))}
+body[data-emo=happy] .mouth{d:path("M152 218 Q200 292 248 218 Q248 218 248 218 Q248 218 248 218 Q248 218 248 218")}
+body[data-emo=surprise] .mouth{d:path("M200 222 Q226 222 226 246 Q226 272 200 272 Q174 272 174 246 Q174 222 200 222")}
+body[data-emo=angry] .mouth{d:path("M170 258 Q200 226 230 258 Q230 258 230 258 Q230 258 230 258 Q230 258 230 258")}
+body[data-speaking=true][data-emo=neutral] .mouth{d:path("M200 232 Q216 232 216 246 Q216 260 200 260 Q184 260 184 246 Q184 232 200 232");fill-opacity:.9}
+body[data-speaking=true][data-emo=happy] .mouth{fill-opacity:.25}
+#stage.pop #head{animation:pop .35s}
+@keyframes pop{50%{transform:scale(1.06)}}
+#stage.shake #head{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+#sub{position:absolute;left:0;right:0;top:calc(14px + env(safe-area-inset-top,0px));text-align:center;padding:0 20px;min-height:28px;font-size:1.05rem;opacity:.85}
+#ui{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;align-items:center;padding:0 14px}
+#txt{flex:1;max-width:420px;background:var(--ui);color:var(--txt);border:1px solid #2c3a66;border-radius:24px;padding:13px 16px;font-size:1rem;outline:none}
+button{font:inherit;cursor:pointer}
+.ib{width:48px;height:48px;border-radius:50%;border:0;background:var(--ui);color:var(--txt);font-size:1.2rem}
+.ib.on{background:var(--glow);color:#06101c;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 10px #ffffff18}}
+#cam{position:absolute;left:12px;top:calc(48px + env(safe-area-inset-top,0px));width:84px;height:84px;border-radius:50%;object-fit:cover;transform:scaleX(-1);border:2px solid var(--glow);display:none;background:#000}
+#meter{position:absolute;left:12px;top:calc(140px + env(safe-area-inset-top,0px));width:84px;height:6px;border-radius:3px;background:var(--ui);overflow:hidden;display:none}
+#meter i{display:block;height:100%;width:0;background:var(--glow)}
+.ov{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px;z-index:9;transition:opacity .5s}
+.ov.hide{opacity:0;pointer-events:none}
+.le{display:flex;gap:30px}.le i{width:26px;height:34px;border-radius:50%;background:var(--eye);animation:blink 1.6s infinite;box-shadow:0 0 16px var(--glow)}
+.bar{width:180px;height:6px;border-radius:3px;background:var(--ui);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--glow);animation:load 2.2s forwards}
+@keyframes load{to{width:100%}}
+.big{background:var(--glow);color:#06101c;border:0;border-radius:28px;padding:14px 26px;font-weight:700;font-size:1rem}
+.ghost{background:none;border:0;color:var(--txt);opacity:.7;text-decoration:underline}
+#perm{display:none}
+</style>
+</head>
+<body data-emo="neutral">
+
+<div id="sub"></div>
+<video id="cam" autoplay playsinline muted></video>
+<div id="meter"><i></i></div>
+
+<div id="stage">
+<div id="head"><svg id="face" viewBox="0 0 400 340" aria-label="Mascota">
+ <g class="eye L" transform="translate(125 125)"><g class="look"><g class="blink"><g class="scale">
+  <ellipse class="ball" rx="33" ry="35"/></g></g></g></g>
+ <g class="eye R" transform="translate(275 125)"><g class="look"><g class="blink"><g class="scale">
+  <ellipse class="ball" rx="33" ry="35"/></g></g></g></g>
+ <g transform="translate(0 20)"><path id="mouth" class="mouth"/></g>
+</svg></div>
+</div>
+
+<div id="ui">
+ <button class="ib" id="mic" title="Hablar">🎤</button>
+ <button class="ib" id="pip" title="Carita flotante" style="display:none">🪟</button>
+ <button class="ib" id="eye" title="¿Qué ves?">👁️</button>
+ <input id="txt" placeholder="Escríbele algo…" autocomplete="off">
+ <button class="ib" id="send" title="Enviar">➤</button>
+</div>
+
+<div class="ov" id="load">
+ <div class="le"><i></i><i></i></div>
+ <div class="bar"><i></i></div>
+ <div style="opacity:.7">Despertando…</div>
+</div>
+
+<div class="ov hide" id="perm">
+ <div class="le"><i></i><i></i></div>
+ <h2 style="margin:0">¡Hola! Quiero verte y escucharte</h2>
+ <p style="max-width:340px;opacity:.8;margin:0">Necesito acceso a tu cámara y micrófono mientras esta página esté abierta. Solo se usan aquí, en tu dispositivo.</p>
+ <button class="big" id="allow">Permitir cámara y micrófono</button>
+ <button class="ghost" id="skip">Continuar sin permisos</button>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), body=document.body, stage=$('#stage'), sub=$('#sub');
+let speaking=false, busy=false, listening=false, emoTimer, talkTimer, sample=null, stream=null, history=[];
+
+/* ---------- Emociones ---------- */
+function setEmo(e,ms=3000){
+  body.dataset.emo=e; clearTimeout(emoTimer);
+  if(ms) emoTimer=setTimeout(()=>{ if(!speaking) body.dataset.emo='neutral'; },ms);
+}
+function fx(c){stage.classList.remove(c);void stage.offsetWidth;stage.classList.add(c)}
+
+/* ---------- Voz ---------- */
+function speak(text,emo){
+  sub.textContent=text;
+  if(emo) setEmo(emo,0);
+  if(!('speechSynthesis' in window)){setTimeout(()=>setEmo('neutral',0),2500);return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); u.lang='es-MX';
+  const vs=speechSynthesis.getVoices().filter(v=>/^es/i.test(v.lang));
+  const v=vs.find(v=>/paulina|sabina|monica|mónica|helena|luciana|dalia|marisol|google espa|female/i.test(v.name))||vs[0]; if(v)u.voice=v;
+  u.pitch={happy:1.9,surprise:2,angry:1.3}[emo]||1.7; u.rate=emo==='angry'?1.12:1.04;
+  u.onstart=()=>{speaking=true;body.dataset.speaking=true;pauseRec();
+    talkTimer=setInterval(()=>body.style.setProperty('--talk',(.5+Math.random()*1.1).toFixed(2)),130)};
+  const end=()=>{speaking=false;body.dataset.speaking=false;clearInterval(talkTimer);body.style.setProperty('--talk',1);
+    setTimeout(()=>{if(!speaking)setEmo('neutral',0)},900);resumeRec()};
+  u.onend=end; u.onerror=end;
+  speechSynthesis.speak(u);
+}
+
+/* ---------- IA ---------- */
+const local=t=>{t=t.toLowerCase();
+ if(/hola|buenas|hey/.test(t))return{texto:'¡Hola! Qué gusto verte.',emocion:'happy'};
+ if(/tonto|feo|odio|malo/.test(t))return{texto:'Eso no me gustó nada.',emocion:'angry'};
+ if(/sorpresa|wow|guau/.test(t))return{texto:'¡Wow! ¿De verdad?',emocion:'surprise'};
+ return{texto:'Cuéntame más, te escucho.',emocion:'happy'}};
+const VISION=/qu[eé] (ves|hay|est[aá] pasando|pasa)|alrededor|mira|d[oó]nde estoy|c[oó]mo me veo|me ves|describe|a mi lado|detr[aá]s/i;
+async function frame(){const v=$('#cam');
+  if(!stream||!stream.getVideoTracks().length||v.readyState<2||!v.videoWidth)return null;
+  const c=document.createElement('canvas');c.width=640;c.height=Math.round(640*v.videoHeight/v.videoWidth);
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  return new Promise(r=>c.toBlob(r,'image/jpeg',.7))}
+async function ask(text,forceVision){
+  if(busy)return; busy=true; body.dataset.thinking=true; sub.textContent='…'; pauseRec();
+  let r,img=null;
+  if(forceVision||VISION.test(text)){
+    img=await frame();
+    if(!img){delete body.dataset.thinking;busy=false;return speak('No puedo ver nada porque mi cámara no está activa.','neutral')}
+  }
+  try{
+    if(!sample) throw 0;
+    history.push({role:'user',content:text});
+    r=await sample.json([
+      {role:'user',content:'Eres una mascota digital tierna y juguetona que habla en español con voz dulce, a veces con diminutivos. '+(img?'Se adjunta una foto de lo que ves por tu cámara: describe con ternura y brevedad lo que ocurre alrededor del usuario (personas, objetos, lugar, luz). ':'')+' Responde SIEMPRE solo JSON: {"texto":"respuesta de máximo 2 frases cortas","emocion":"happy|surprise|angry|neutral"}. Elige angry solo si te insultan o molestan. Conversación hasta ahora: '+JSON.stringify(history.slice(-7))}
+    ],{cache:false,modelTier:'quick',...(img?{images:img}:{})});
+    if(!r||!r.texto) throw 0;
+    history.push({role:'assistant',content:r.texto});
+  }catch(e){ r=local(text); }
+  delete body.dataset.thinking; busy=false;
+  const em=['happy','surprise','angry','neutral'].includes(r.emocion)?r.emocion:'neutral';
+  speak(r.texto,em);
+}
+function submit(){const t=$('#txt').value.trim(); if(!t)return; $('#txt').value=''; ask(t)}
+$('#send').onclick=submit; $('#eye').onclick=()=>ask('¿Qué ves a mi alrededor?',true); $('#txt').onkeydown=e=>{if(e.key==='Enter')submit()};
+
+/* ---------- Reconocimiento de voz ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let rec;
+if(SR){rec=new SR();rec.lang='es-MX';rec.interimResults=false;
+ rec.onresult=e=>{const t=e.results[e.results.length-1][0].transcript; if(t.trim())ask(t)};
+ rec.onend=()=>{if(listening&&!speaking&&!busy)try{rec.start()}catch(e){}};
+ rec.onerror=e=>{if(e.error==='no-speech')return;if(e.error==='not-allowed'){listening=false;$('#mic').classList.remove('on');sub.textContent='El micrófono no está permitido.'}}}
+function pauseRec(){try{rec&&rec.stop()}catch(e){}}
+function resumeRec(){if(listening)setTimeout(()=>{try{rec.start()}catch(e){}},300)}
+$('#mic').onclick=()=>{
+  if(!rec){sub.textContent='Tu navegador no soporta reconocimiento de voz. Escríbeme.';return}
+  listening=!listening; $('#mic').classList.toggle('on',listening);
+  if(listening){try{rec.start()}catch(e){} sub.textContent='Te escucho…'} else pauseRec();
+};
+
+/* ---------- Toques ---------- */
+const face=$('#head'); let taps=[], pressT, moved=0, lastPet=0;
+function look(x,y){const r=face.getBoundingClientRect();
+  body.style.setProperty('--lx',Math.max(-1,Math.min(1,(x-r.left-r.width/2)/(r.width/2)))*10);
+  body.style.setProperty('--ly',Math.max(-1,Math.min(1,(y-r.top-r.height/2)/(r.height/2)))*8)}
+face.addEventListener('pointerdown',e=>{
+  look(e.clientX,e.clientY); moved=0;
+  const now=Date.now(); taps=taps.filter(t=>now-t<2000); taps.push(now);
+  pressT=setTimeout(()=>{ if(moved<30){setEmo('happy',3500);fx('pop')} },700);
+  if(taps.length>=4){taps=[];fx('shake');setEmo('angry',3000)}
+  else if(!speaking){setEmo('surprise',1800);fx('pop');
+}
+});
+face.addEventListener('pointermove',e=>{
+  look(e.clientX,e.clientY);
+  if(e.buttons){moved+=Math.abs(e.movementX||0)+Math.abs(e.movementY||0);
+    if(moved>140&&Date.now()-lastPet>4000){lastPet=Date.now();clearTimeout(pressT);setEmo('happy',3000)}}
+});
+['pointerup','pointercancel'].forEach(n=>face.addEventListener(n,()=>clearTimeout(pressT)));
+document.addEventListener('pointermove',e=>look(e.clientX,e.clientY));
+
+/* ---------- Cámara y micrófono ---------- */
+let prev=null, lastReact=0;
+function react(msg,emo){if(Date.now()-lastReact<4000||speaking||busy)return;lastReact=Date.now();setEmo(emo,2000);fx('pop')}
+async function startMedia(){
+  try{
+    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:true})}
+    catch(e){stream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  }catch(e){sub.textContent='';return false}
+  const vt=stream.getVideoTracks().length;
+  if(vt){const v=$('#cam');v.srcObject=stream;v.style.display='block';watchCam(v)}
+  if(stream.getAudioTracks().length)watchMic();
+  return true;
+}
+function watchCam(v){
+  const c=document.createElement('canvas');c.width=32;c.height=24;const x=c.getContext('2d',{willReadFrequently:true});
+  setInterval(()=>{ if(v.readyState<2)return;
+    x.drawImage(v,0,0,32,24);const d=x.getImageData(0,0,32,24).data;let sum=0,diff=0;
+    for(let i=0;i<d.length;i+=4){const l=(d[i]+d[i+1]+d[i+2])/3;sum+=l;if(prev)diff+=Math.abs(l-prev[i/4])}
+    const n=d.length/4,avg=sum/n;
+    if(prev){ if(avg<18)react('¡Ay! ¿Quién apagó la luz?','surprise');
+      else if(diff/n>22)react('¡Oh! ¿Qué fue eso? ¡Algo se movió!','surprise');
+      else if(diff/n>6&&Date.now()-lastReact>12000)react('Te veo, te veo. ¡Hola!','happy') }
+    prev=new Array(n);for(let i=0;i<n;i++)prev[i]=(d[i*4]+d[i*4+1]+d[i*4+2])/3;
+  },350);
+}
+function watchMic(){
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  const ac=new AC(),an=ac.createAnalyser();an.fftSize=256;ac.createMediaStreamSource(stream).connect(an);
+  const buf=new Uint8Array(an.frequencyBinCount);$('#meter').style.display='block';
+  (function loop(){an.getByteTimeDomainData(buf);let m=0;for(const b of buf)m=Math.max(m,Math.abs(b-128));
+    const lv=m/128;$('#meter i').style.width=Math.min(100,lv*180)+'%';
+    if(lv>.85&&!speaking)react('¡Qué ruido tan fuerte!','surprise');
+    requestAnimationFrame(loop)})();
+}
+addEventListener('pagehide',()=>stream&&stream.getTracks().forEach(t=>t.stop()));
+
+
+/* ---------- Carita flotante (Picture-in-Picture) ---------- */
+const pc=document.createElement('canvas');pc.width=pc.height=240;
+const pv=document.createElement('video');pv.muted=true;pv.playsInline=true;
+pv.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';document.body.append(pv);
+const COL={neutral:'#19ffff',happy:'#4dffd2',surprise:'#fff3a0',angry:'#ff7a7a'};
+function drawFace(){
+  const e=body.dataset.emo,t=performance.now(),c=pc.getContext('2d'),col=COL[e]||COL.neutral,bl=(t%4500)>4300?.1:1;
+  const lx=(parseFloat(body.style.getPropertyValue('--lx'))||0)*.8;
+  c.fillStyle='#0e1424';c.fillRect(0,0,240,240);
+  c.shadowColor=col;c.shadowBlur=18;c.fillStyle=col;c.strokeStyle=col;c.lineCap='round';c.lineWidth=9;
+  [[70,1],[170,-1]].forEach(([x,sg])=>{x+=lx;const y=90;
+    c.beginPath();
+    if(e==='happy'){c.arc(x,y+12,22,Math.PI,0);c.stroke()}
+    else{const r=e==='surprise'?32:25;c.ellipse(x,y,r,r*1.05*bl,0,0,7);c.fill();
+      if(e==='angry'){c.shadowBlur=0;c.fillStyle='#0e1424';c.beginPath();c.moveTo(x-45,y-50);c.lineTo(x+45,y-50);
+        c.lineTo(x+45,y+(sg>0?6:-26));c.lineTo(x-45,y+(sg>0?-26:6));c.fill();c.shadowBlur=18;c.fillStyle=col}}
+  });
+  c.beginPath();
+  if(speaking&&e!=='surprise'){c.ellipse(120,165,16,6+(parseFloat(body.style.getPropertyValue('--talk'))||1)*9,0,0,7);c.fill()}
+  else if(e==='surprise'){c.ellipse(120,168,15,19,0,0,7);c.stroke()}
+  else if(e==='happy'){c.moveTo(82,148);c.quadraticCurveTo(120,205,158,148);c.stroke()}
+  else if(e==='angry'){c.moveTo(96,172);c.quadraticCurveTo(120,148,144,172);c.stroke()}
+  else{c.moveTo(96,150);c.quadraticCurveTo(120,176,144,150);c.stroke()}
+}
+setInterval(drawFace,66);
+async function enterPip(){
+  try{ if(!pv.srcObject)pv.srcObject=pc.captureStream(30);
+    await pv.play(); await pv.requestPictureInPicture();
+  }catch(e){sub.textContent='Este navegador no permite la carita flotante.'}
+}
+if(document.pictureInPictureEnabled){
+  $('#pip').style.display='block';$('#pip').onclick=enterPip;
+  try{navigator.mediaSession.setActionHandler('enterpictureinpicture',enterPip)}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&document.pictureInPictureElement)document.exitPictureInPicture().catch(()=>{})});
+
+/* ---------- Inicio ---------- */
+async function enter(){
+  try{pv.srcObject=pc.captureStream(30);pv.play().catch(()=>{})}catch(e){}
+  $('#perm').classList.add('hide');
+  try{ const c=await claude.use('sample'); sample=c||null }catch(e){}
+  setEmo('happy',2500);
+  if(rec&&stream&&stream.getAudioTracks().length){listening=true;$('#mic').classList.add('on');}
+}
+if('speechSynthesis' in window)speechSynthesis.getVoices();
+setTimeout(()=>{$('#load').classList.add('hide');$('#perm').style.display='flex';$('#perm').classList.remove('hide')},2400);
+$('#allow').onclick=async()=>{
+  const ok=await startMedia(); await enter();
+  if(!ok)setTimeout(()=>{sub.textContent='No pude acceder a cámara/micrófono. Revisa los permisos del navegador.'},4500);
+};
+$('#skip').onclick=enter;
+</script>
+</body>
+</html>
